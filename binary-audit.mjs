@@ -5,8 +5,10 @@ import { defaults, loadSnapshot } from './audit.mjs';
 import { locateQuoteWithContext, convertHtml, loadDependencies, noteText, combineNotes, sha } from './convert.mjs';
 
 const snapshot = await loadSnapshot(defaults.cache), deps = loadDependencies(defaults.workflow);
+const policy = JSON.parse(await fs.readFile(path.join(defaults.cache, 'policy.json'), 'utf8'));
 const results = [];
 for (const doc of snapshot.archive.filter(d => ['epub', 'pdf'].includes(d.category))) {
+  if (policy.excludedReaderIds[doc.id]) continue;
   let packagePath = `D:/Projects/渐进阅读工作流/imports/readwise-validation/${doc.id}`;
   if (doc.category === 'pdf') {
     try { await fs.access(packagePath + '-pdf-ordered/manifest.json'); packagePath += '-pdf-ordered'; } catch { /* Original package if ordered conversion has not run. */ }

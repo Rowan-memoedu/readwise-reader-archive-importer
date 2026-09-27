@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { convertHtml, loadDependencies, locateQuoteWithContext, projection } from './convert.mjs';
+import { rebase } from './import.mjs';
 const deps = loadDependencies('D:/Projects/渐进阅读工作流');
 const doc = { id: 'fixture', html_content: '<h1>Independent fixture</h1><p>A <strong>bold</strong> claim.</p><ul><li>first</li><li>second</li></ul><table><tr><th>Item</th><th>Value</th></tr><tr><td>x</td><td>10</td></tr></table><pre><code>const x = 1;</code></pre>', notes: 'full musing' };
 const highlight = { id: 'highlight', parent_id: 'fixture', content: 'A bold claim.', notes: 'attached comment' };
@@ -22,4 +23,12 @@ const repeated = convertHtml({ id: 'range', html_content: '<div><p>same</p><p>sa
   [{ id: 'range-h', content: 'same', highlight_location: '0/1:0,0/1:4' }], [], deps);
 assert.equal(repeated.issues.length, 0);
 assert.equal(repeated.annotations[0].range.start, repeated.body.lastIndexOf('same'));
+const imageBody = '\n![diagram](assets/diagram.png)\n';
+const rebased = rebase(imageBody, [{ id: 'image', virtualRanges: [{ start: 0, end: imageBody.length }] }], 'metadata\n', 'fixture-id');
+assert.equal(rebased.annotations[0].originalText, '![diagram](../附件/Readwise/fixture-id/diagram.png)');
+assert.equal(rebased.body.slice(rebased.annotations[0].range.start, rebased.annotations[0].range.end), rebased.annotations[0].originalText);
+const title = convertHtml({ id: 'title', title: 'API original title', html_content: '<p>Body without its title.</p>' },
+  [{ id:'title-h',content:'API original title' }],[],deps);
+assert.equal(title.issues.length,0); assert.match(title.body,/^# API original title/);
+assert.equal(convertHtml({ id:'absent',title:'Other title',html_content:'<p>Body</p>' },[{id:'absent-h',content:'Missing quote'}],[],deps).issues.length,1);
 console.log('PASS: deterministic conversion, native quote ranges, note deduplication, musing, table/code, contextual anchors, fail-closed ambiguity');

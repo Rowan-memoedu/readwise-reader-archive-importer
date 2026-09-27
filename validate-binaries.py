@@ -12,6 +12,8 @@ ARTIFACTS = Path('D:/Artifacts/ReadwiseReaderArchive')
 
 def main():
     documents = json.loads((CACHE / 'binary-source-index.json').read_text(encoding='utf-8-sig'))
+    policy = json.loads((CACHE / 'policy.json').read_text(encoding='utf-8-sig'))
+    documents = [doc for doc in documents if doc['id'] not in policy.get('excludedReaderIds', {})]
     originals = CACHE / 'originals'
     originals.mkdir(exist_ok=True)
     results = []

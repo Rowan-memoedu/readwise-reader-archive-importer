@@ -114,6 +114,15 @@ function rangeFromSerialized(document, location, quote) {
 export function convertHtml(doc, highlights, notes, deps) {
   if (!String(doc.html_content || '').trim()) return { issues: [{ kind: 'source_html_unavailable', id: doc.id }] };
   const dom = new deps.JSDOM(doc.html_content, { virtualConsole: new deps.VirtualConsole() }), document = dom.window.document;
+  // Reader can highlight its document title while omitting that title from
+  // html_content. Restore only an exact API-title selection, with provenance
+  // from title metadata; never synthesize a quote absent from both sources.
+  const title = String(doc.title || '');
+  if (title && highlights.some(h => projection(h.content || '').value === projection(title).value)
+    && !projection(document.body.textContent).value.includes(projection(title).value)) {
+    const heading = document.createElement('h1'); heading.textContent = title;
+    document.body.prepend(heading);
+  }
   const nodes = []; let source = '';
   const walker = document.createTreeWalker(document.body, 4);
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
