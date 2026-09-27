@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import { convertHtml, loadDependencies, locateQuoteWithContext, projection } from './convert.mjs';
+const deps = loadDependencies('D:/Projects/渐进阅读工作流');
+const doc = { id: 'fixture', html_content: '<h1>Independent fixture</h1><p>A <strong>bold</strong> claim.</p><ul><li>first</li><li>second</li></ul><table><tr><th>Item</th><th>Value</th></tr><tr><td>x</td><td>10</td></tr></table><pre><code>const x = 1;</code></pre>', notes: 'full musing' };
+const highlight = { id: 'highlight', parent_id: 'fixture', content: 'A bold claim.', notes: 'attached comment' };
+const result = convertHtml(doc, [highlight], [{ id: 'note', parent_id: 'highlight', content: 'attached comment' }], deps);
+assert.equal(result.issues.length, 0);
+assert.equal(result.annotations.length, 1);
+assert.equal(result.annotations[0].commentMarkdown, 'attached comment');
+assert.equal(result.articleMusing.bodyMarkdown, 'full musing');
+assert.equal(result.articleMusing.aiStatus, 'skipped');
+assert.equal(result.body.slice(result.annotations[0].range.start, result.annotations[0].range.end), result.annotations[0].originalText);
+assert.match(result.body, /\| Item \| Value \|/);
+assert.match(result.body, /const x = 1;/);
+assert.equal(projection('one [two](https://example.org)\n- three ![](img.png)', true).value, 'onetwothree');
+assert.equal(locateQuoteWithContext('repeated repeated', 'repeated').issue, 'ambiguous_highlight');
+const contextual = 'the first occurrence has unique preceding context. repeated. the second occurrence has a different preceding context. repeated.';
+const at = contextual.lastIndexOf('repeated');
+assert.equal(locateQuoteWithContext(contextual, 'repeated', { contextBefore: contextual.slice(at-40, at) }).start, at);
+assert.equal(locateQuoteWithContext('nothing to select', 'absent').issue, 'highlight_not_in_source');
+const repeated = convertHtml({ id: 'range', html_content: '<div><p>same</p><p>same</p></div>' },
+  [{ id: 'range-h', content: 'same', highlight_location: '0/1:0,0/1:4' }], [], deps);
+assert.equal(repeated.issues.length, 0);
+assert.equal(repeated.annotations[0].range.start, repeated.body.lastIndexOf('same'));
+console.log('PASS: deterministic conversion, native quote ranges, note deduplication, musing, table/code, contextual anchors, fail-closed ambiguity');
