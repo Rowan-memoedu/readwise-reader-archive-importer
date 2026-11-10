@@ -2,7 +2,6 @@
 
 - 代码提交、PR 合并、同步与共享边界遵守 [CONTRIBUTING.md](CONTRIBUTING.md)。历史任务授权、私人账号及生产数据权限不随源码共享转移给其他成员或 Agent。
 
-
 - Scope: manually import Reader Archive originals and native annotations into the existing Obsidian Local IR workflow. Never write to RemNote.
 - Entry: `pwsh -NoLogo -NoProfile -File D:\Projects\ReadwiseReaderArchiveImporter\Import.ps1`; Obsidian QuickAdd calls quickadd.cjs. `-UseCache` is only for a cached run.
 - Stack: Node built-in APIs plus the maintained workflow's jsdom/Turndown/core; bundled Python pdfplumber/pypdfium2 and the existing EPUB extractor. No model, MinerU or OCR calls.
